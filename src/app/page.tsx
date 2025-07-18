@@ -130,7 +130,7 @@ export default function Home() {
             icon: (<svg className="w-10 h-10 mb-4 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="7" width="7" height="13" rx="2" /><rect x="14" y="3" width="7" height="17" rx="2" /></svg>),
             title: "Flexible Investment Plans",
             desc: "Choose from a variety of plans tailored to your goals, risk tolerance, and investment style."
-          }].map((card, i) => (
+          }].map((card) => (
             <motion.div
               key={card.title}
               className="bg-white/90 border border-emerald-100 rounded-xl shadow-2xl p-6 flex flex-col items-center text-center"
@@ -200,7 +200,7 @@ export default function Home() {
           {/* Text Right */}
           <div className="flex-1 flex flex-col justify-center text-white py-8 md:py-0 md:pr-8 h-full">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Invest with Confidence, Invest with investlp</h2>
-            <p className="text-lg mb-6">At investlp, we believe everyone deserves access to smart, secure, and rewarding investment opportunities. Our platform is designed to empower you—whether you're a beginner or a seasoned investor—with the tools, support, and transparency you need to grow your wealth. Join a thriving community, enjoy expert guidance, and take the next step toward your financial goals today.</p>
+            <p className="text-lg mb-6">At investlp, we believe everyone deserves access to smart, secure, and rewarding investment opportunities. Our platform is designed to empower you—whether you&apos;re a beginner or a seasoned investor—with the tools, support, and transparency you need to grow your wealth. Join a thriving community, enjoy expert guidance, and take the next step toward your financial goals today.</p>
             <a href="#get-started" className="inline-block px-8 py-3 bg-white text-emerald-600 font-semibold text-lg shadow rounded hover:bg-gray-100 transition">Get Started Now</a>
           </div>
         </div>
@@ -235,14 +235,14 @@ export default function Home() {
               role: "Seasoned Investor",
               quote: "The platform is intuitive and the plans are flexible."
             }
-          ].map((t, i) => (
+          ].map((t) => (
             <motion.div
               key={t.name}
               className="bg-white rounded-xl shadow-xl p-6 flex flex-col items-center text-center border border-gray-100"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
+              transition={{ duration: 0.6, delay: t.name.charCodeAt(0) * 0.15 }}
             >
               <Image src={t.avatar} alt={t.name} width={64} height={64} className="w-16 h-16 rounded-full mb-4 object-cover border-4 border-emerald-100 shadow" />
               <h4 className="font-semibold text-lg mb-1 text-gray-900">{t.name}</h4>
