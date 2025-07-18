@@ -93,22 +93,22 @@ const footerLinks = [
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-emerald-900 text-white pt-16 pb-8 px-4 mt-20">
+    <footer className="w-full bg-[var(--background)] text-[var(--foreground)] pt-16 pb-8 px-4 mt-20">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-start md:justify-between gap-12">
         {/* Logo/Brand */}
         <div className="flex-shrink-0 mb-8 md:mb-0 flex items-center gap-2 text-2xl font-bold">
-          <span className="text-emerald-400">&#9650;</span>
+          <span className="text-[var(--brand)]">&#9650;</span>
           <span className="font-extrabold tracking-tight">investlp</span>
         </div>
         {/* Footer Columns */}
         <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-8">
           {footerLinks.map((col) => (
             <div key={col.title}>
-              <h4 className="font-semibold text-emerald-300 mb-3 text-base">{col.title}</h4>
+              <h4 className="font-semibold text-[var(--brand)] mb-3 text-base">{col.title}</h4>
               <ul className="space-y-2">
                 {col.links.map((link) => (
                   <li key={link.name}>
-                    <a href={link.href} className="text-gray-200 hover:text-emerald-300 text-sm transition">
+                    <a href={link.href} className="text-[var(--foreground)] hover:text-[var(--brand)] text-sm transition">
                       {link.name}
                     </a>
                   </li>
@@ -118,7 +118,7 @@ export default function Footer() {
           ))}
         </div>
       </div>
-      <div className="max-w-7xl mx-auto mt-12 text-xs text-gray-400 text-center">
+      <div className="max-w-7xl mx-auto mt-12 text-xs text-[var(--foreground)]/60 text-center">
         © 2024 investlp. All rights reserved.
       </div>
     </footer>
