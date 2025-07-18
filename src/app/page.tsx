@@ -27,6 +27,38 @@ const cardVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
 };
 
+// FAQ Accordion Item
+function AccordionItem({ q, a, delay }: { q: string; a: string; delay: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <motion.div
+      className="border border-emerald-100 rounded-xl bg-white/90 shadow p-4"
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, delay }}
+    >
+      <button
+        className="w-full flex justify-between items-center text-lg font-semibold text-emerald-700 focus:outline-none"
+        onClick={() => setOpen((v) => !v)}
+        type="button"
+        aria-expanded={open}
+      >
+        {q}
+        <span className={`ml-2 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
+      </button>
+      <motion.div
+        initial={false}
+        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+        className="overflow-hidden text-gray-700 text-base mt-2"
+      >
+        {open && <div className="pt-2">{a}</div>}
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const [current, setCurrent] = useState(0);
   const nextSlide = () => setCurrent((current + 1) % slides.length);
@@ -45,7 +77,7 @@ export default function Home() {
       <section className="relative z-0 flex flex-col justify-center items-center min-h-[70vh] w-full text-center text-white px-4">
         {/* Background Image and Overlay only for Hero */}
         <div className="absolute inset-0 w-full h-full z-[-1]">
-          <img src="/coin-growth-landscape.jpg" alt="Investment growth" className="w-full h-full object-cover object-center" />
+          <Image src="/coin-growth-landscape.jpg" alt="Investment growth" fill className="w-full h-full object-cover object-center" priority />
           <div className="absolute inset-0 bg-black/60" />
         </div>
         <div className="w-full max-w-3xl mx-auto z-10">
@@ -163,7 +195,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center gap-10 min-h-[20rem] md:h-[22rem] pt-4">
           {/* Image Left */}
           <div className="flex-1 flex justify-center items-center h-60 md:h-full">
-            <img src="/invest-hands.jpg" alt="Investing together" className="rounded-xl shadow-2xl w-full max-w-xs md:max-w-sm h-full object-cover" />
+            <Image src="/invest-hands.jpg" alt="Investing together" width={320} height={320} className="rounded-xl shadow-2xl w-full max-w-xs md:max-w-sm h-full object-cover" />
           </div>
           {/* Text Right */}
           <div className="flex-1 flex flex-col justify-center text-white py-8 md:py-0 md:pr-8 h-full">
@@ -212,10 +244,10 @@ export default function Home() {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: i * 0.15 }}
             >
-              <img src={t.avatar} alt={t.name} className="w-16 h-16 rounded-full mb-4 object-cover border-4 border-emerald-100 shadow" />
+              <Image src={t.avatar} alt={t.name} width={64} height={64} className="w-16 h-16 rounded-full mb-4 object-cover border-4 border-emerald-100 shadow" />
               <h4 className="font-semibold text-lg mb-1 text-gray-900">{t.name}</h4>
               <span className="text-emerald-600 text-xs mb-2">{t.role}</span>
-              <p className="text-gray-700 text-sm italic">“{t.quote}”</p>
+              <p className="text-gray-700 text-sm italic">&ldquo;{t.quote}&rdquo;</p>
             </motion.div>
           ))}
         </div>
@@ -242,36 +274,9 @@ export default function Home() {
               q: "What support do you offer?",
               a: "Our expert team is available to help you with any questions or issues, whenever you need us."
             }
-          ].map((item, i) => {
-            const [open, setOpen] = useState(false);
-            return (
-              <motion.div
-                key={item.q}
-                className="border border-emerald-100 rounded-xl bg-white/90 shadow p-4"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <button
-                  className="w-full flex justify-between items-center text-lg font-semibold text-emerald-700 focus:outline-none"
-                  onClick={() => setOpen((v) => !v)}
-                  type="button"
-                >
-                  {item.q}
-                  <span className={`ml-2 transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-                </button>
-                <motion.div
-                  initial={false}
-                  animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden text-gray-700 text-base mt-2"
-                >
-                  {open && <div className="pt-2">{item.a}</div>}
-                </motion.div>
-              </motion.div>
-            );
-          })}
+          ].map((item, i) => (
+            <AccordionItem key={item.q} q={item.q} a={item.a} delay={i * 0.1} />
+          ))}
         </div>
       </section>
 
