@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaPiggyBank, FaBuilding, FaBitcoin, FaGlobe, FaShieldAlt, FaBriefcase, FaDollarSign, FaChartLine } from 'react-icons/fa';
+import { LuBanknote } from 'react-icons/lu';
 
 const slides = [
   {
@@ -58,6 +60,63 @@ function AccordionItem({ q, a, delay }: { q: string; a: string; delay: number })
     </motion.div>
   );
 }
+
+const investmentSectors = [
+  {
+    name: 'Savings Accounts',
+    icon: FaPiggyBank,
+    short: 'Safe, flexible accounts for your everyday money.',
+    detail: 'Savings accounts are a secure way to store your money, earn interest, and access funds anytime. Perfect for emergency funds and short-term goals.'
+  },
+  {
+    name: 'Fixed Deposits / CDs',
+    icon: LuBanknote,
+    short: 'Lock in your money for higher interest.',
+    detail: 'Fixed deposits (Certificates of Deposit) offer higher interest rates when you commit your money for a set period. Great for stable, predictable growth.'
+  },
+  {
+    name: 'Stocks & Mutual Funds',
+    icon: FaChartLine,
+    short: 'Invest in companies or diversified funds.',
+    detail: 'Stocks and mutual funds let you invest in businesses for long-term growth. Mutual funds pool your money with others for diversification.'
+  },
+  {
+    name: 'Bonds',
+    icon: FaDollarSign,
+    short: 'Lend money for regular interest payments.',
+    detail: 'Bonds are loans to governments or companies. They pay you interest and are generally less risky than stocks.'
+  },
+  {
+    name: 'Real Estate',
+    icon: FaBuilding,
+    short: 'Invest in property or real estate funds.',
+    detail: 'Real estate investments can provide rental income and potential appreciation. You can invest directly or through real estate funds.'
+  },
+  {
+    name: 'Cryptocurrency',
+    icon: FaBitcoin,
+    short: 'Digital assets like Bitcoin and Ethereum.',
+    detail: 'Cryptocurrencies are digital, decentralized assets. They are high risk and high reward, and can diversify your portfolio.'
+  },
+  {
+    name: 'Commodities',
+    icon: FaGlobe,
+    short: 'Gold, oil, and agricultural products.',
+    detail: 'Commodities help diversify your investments and can hedge against inflation. Examples include gold, oil, and wheat.'
+  },
+  {
+    name: 'Retirement Accounts',
+    icon: FaShieldAlt,
+    short: 'Save for the future with tax advantages.',
+    detail: 'Retirement accounts like IRAs or pensions help you save for the long term, often with tax benefits.'
+  },
+  {
+    name: 'Business & Startup Investments',
+    icon: FaBriefcase,
+    short: 'Support new businesses and innovation.',
+    detail: 'Investing in startups or private businesses can offer high returns and help drive innovation, but comes with higher risk.'
+  },
+];
 
 export default function Home() {
   const [current, setCurrent] = useState(0);
@@ -146,6 +205,34 @@ export default function Home() {
           ))}
         </div>
 
+      </section>
+
+      {/* Investment Sectors Section */}
+      <section className="w-full max-w-6xl mx-auto mt-32 px-4">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-[var(--brand)]">Investment Sectors We Indulge In</h2>
+        <p className="text-lg text-[var(--foreground)]/80 mb-12 max-w-2xl mx-auto text-center">
+          We help our clients grow their investments by offering a wide range of sectors, each with unique opportunities and benefits. Explore the options below to see how you can diversify and strengthen your portfolio with us.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {investmentSectors.map((sector) => {
+            const Icon = sector.icon;
+            return (
+              <div key={sector.name} className="bg-[var(--card-bg)] rounded-xl shadow-xl p-6 flex flex-col items-start text-left border border-[var(--brand)]/20 relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'var(--shine)' }} />
+                <div className="flex items-center gap-4 mb-4 z-10">
+                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--brand)]/20">
+                    <Icon className="text-[var(--brand)]" size={32} />
+                  </span>
+                  <h3 className="font-semibold text-xl text-[var(--foreground)]">{sector.name}</h3>
+                </div>
+                <div className="z-10">
+                  <p className="text-[var(--foreground)]/90 mb-2 font-medium">{sector.short}</p>
+                  <p className="text-[var(--foreground)]/70 text-sm">{sector.detail}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </section>
       {/* How investlp Works Section */}
       <section className="w-full max-w-5xl mx-auto mt-32 px-4">
