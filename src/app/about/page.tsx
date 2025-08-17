@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FaUsers, FaShieldAlt, FaChartLine, FaGlobe, FaAward, FaHandshake, FaLightbulb, FaHeart } from 'react-icons/fa';
+import Image from "next/image";
+import { FaUsers, FaShieldAlt, FaChartLine, FaGlobe, FaHandshake, FaLightbulb, FaHeart } from 'react-icons/fa';
 
 const cardVariants = {
   hidden: { opacity: 0, y: 40 },
@@ -118,7 +119,7 @@ export default function About() {
           >
             <h2 className="text-3xl font-bold mb-6 text-[var(--brand)]">Our Vision</h2>
             <p className="text-lg text-[var(--foreground)]/80 mb-6">
-              To become the world's most trusted and innovative investment platform, democratizing access to wealth-building opportunities for millions of people worldwide.
+              To become the world&apos;s most trusted and innovative investment platform, democratizing access to wealth-building opportunities for millions of people worldwide.
             </p>
             <p className="text-[var(--foreground)]/70">
               We envision a future where everyone has the tools, knowledge, and confidence to build lasting wealth through intelligent investing.
@@ -222,7 +223,13 @@ export default function About() {
             >
               <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ background: 'var(--shine)' }} />
               <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-[var(--brand)]/20 z-10">
-                <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+                <Image 
+                  src={member.image} 
+                  alt={member.name} 
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h3 className="font-semibold text-xl mb-2 text-[var(--foreground)] z-10">{member.name}</h3>
               <p className="text-[var(--brand)] text-sm mb-3 z-10">{member.role}</p>

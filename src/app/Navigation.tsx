@@ -12,6 +12,7 @@ export default function Navigation() {
   // Pages where we don't want to show the full navigation
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const isDashboardPage = pathname?.startsWith("/dashboard");
+  const isAdminPage = pathname === "/admin";
   
   // Don't render navigation on auth pages
   if (isAuthPage) {
@@ -35,7 +36,7 @@ export default function Navigation() {
   }
 
   // Dashboard navigation - simplified header
-  if (isDashboardPage) {
+  if (isDashboardPage || isAdminPage) {
     return (
       <header className="w-full h-20 z-20 fixed top-0 left-0 bg-[var(--background)] px-4 lg:px-20 flex justify-between items-center shadow-sm">
         {/* Logo/Brand */}
@@ -89,6 +90,11 @@ export default function Navigation() {
             <Link href="/dashboard" className="ml-4 px-5 py-2 rounded bg-[var(--brand)] text-[var(--foreground)] font-semibold hover:opacity-90 transition">
               Dashboard
             </Link>
+            {session.user?.role === 'admin' && (
+              <Link href="/admin" className="ml-2 px-4 py-2 rounded bg-yellow-600 hover:bg-yellow-700 text-white font-semibold transition">
+                Admin
+              </Link>
+            )}
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="ml-2 px-5 py-2 rounded border border-[var(--brand)] text-[var(--brand)] font-semibold hover:bg-[var(--brand)]/10 transition"
@@ -128,6 +134,11 @@ export default function Navigation() {
             <Link href="/dashboard" className="mt-4 px-5 py-2 rounded bg-[var(--brand)] text-[var(--foreground)] font-semibold hover:opacity-90 transition" onClick={() => setIsOpen(false)}>
               Dashboard
             </Link>
+            {session.user?.role === 'admin' && (
+              <Link href="/admin" className="mt-2 px-4 py-2 rounded bg-yellow-600 hover:bg-yellow-700 text-white font-semibold transition" onClick={() => setIsOpen(false)}>
+                Admin
+              </Link>
+            )}
             <button
               onClick={() => {
                 setIsOpen(false);

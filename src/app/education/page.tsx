@@ -1,12 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FaGraduationCap, FaPlay, FaBook, FaChartLine, FaUsers, FaClock, FaStar, FaDownload, FaVideo, FaFileAlt, FaGlobe, FaBitcoin, FaDollarSign, FaShieldAlt } from 'react-icons/fa';
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
-};
+import { FaGraduationCap, FaBook, FaChartLine, FaUsers, FaClock, FaStar, FaDownload, FaVideo, FaFileAlt, FaGlobe, FaBitcoin, FaDollarSign, FaShieldAlt } from 'react-icons/fa';
 
 const courses = [
   {

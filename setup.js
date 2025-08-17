@@ -57,3 +57,4 @@ console.log('🔗 For MongoDB setup: https://docs.mongodb.com/manual/installatio
 console.log('🔗 For NextAuth setup: https://next-auth.js.org/getting-started/introduction\n');
 
 console.log('✨ Setup complete! Happy coding! 🎉');
+

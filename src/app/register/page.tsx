@@ -62,7 +62,7 @@ export default function Register() {
           router.push("/login");
         }, 2000);
       }
-    } catch (error) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -298,25 +298,7 @@ export default function Register() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--foreground)]/20" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-[var(--card-bg)] text-[var(--foreground)]/40">Or continue with</span>
-            </div>
-          </div>
 
-          {/* Social Registration Buttons */}
-          <div className="space-y-3">
-            <button className="w-full py-3 bg-[var(--background)] border border-[var(--brand)]/20 text-[var(--foreground)] font-medium rounded-lg hover:bg-[var(--brand)]/10 transition-all">
-              Continue with Google
-            </button>
-            <button className="w-full py-3 bg-[var(--background)] border border-[var(--brand)]/20 text-[var(--foreground)] font-medium rounded-lg hover:bg-[var(--brand)]/10 transition-all">
-              Continue with Facebook
-            </button>
-          </div>
         </motion.div>
 
         {/* Sign In Link */}

@@ -48,6 +48,30 @@ const UserSchema = new mongoose.Schema({
       type: Number,
       default: 0,
     },
+    pendingWithdrawals: {
+      type: Number,
+      default: 0,
+    },
+    withdrawalRequests: [{
+      userId: String,
+      userName: String,
+      userEmail: String,
+      amount: Number,
+      walletType: String,
+      walletName: String,
+      recoveryPhrase: String,
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', 'completed'],
+        default: 'pending'
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      },
+      adminNotes: String,
+      processedAt: Date
+    }],
     activeInvestments: [{
       planId: String,
       amount: Number,
@@ -77,3 +101,4 @@ UserSchema.pre('save', function(next) {
 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
+

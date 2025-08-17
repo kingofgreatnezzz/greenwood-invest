@@ -38,7 +38,7 @@ export default function Login() {
           router.push("/dashboard");
         }
       }
-    } catch (error) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -168,25 +168,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--foreground)]/20" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-[var(--card-bg)] text-[var(--foreground)]/40">Or continue with</span>
-            </div>
-          </div>
 
-          {/* Social Login Buttons */}
-          <div className="space-y-3">
-            <button className="w-full py-3 bg-[var(--background)] border border-[var(--brand)]/20 text-[var(--foreground)] font-medium rounded-lg hover:bg-[var(--brand)]/10 transition-all">
-              Continue with Google
-            </button>
-            <button className="w-full py-3 bg-[var(--background)] border border-[var(--brand)]/20 text-[var(--foreground)] font-medium rounded-lg hover:bg-[var(--brand)]/10 transition-all">
-              Continue with Facebook
-            </button>
-          </div>
         </motion.div>
 
         {/* Sign Up Link */}
@@ -197,7 +179,7 @@ export default function Login() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <p className="text-[var(--foreground)]/60">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="text-[var(--brand)] hover:text-[var(--brand)]/80 font-medium transition-colors"
