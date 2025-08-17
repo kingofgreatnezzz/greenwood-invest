@@ -59,7 +59,10 @@ export async function GET(request: NextRequest) {
         // Get user's investment profile data
         const userInvestment = user.investment || {};
         
-                 return {
+        console.log(`🔍 [ADMIN USERS API] User ${user.name} investment data:`, userInvestment);
+        console.log(`🔍 [ADMIN USERS API] User ${user.name} withdrawal requests:`, userInvestment.withdrawalRequests);
+        
+        return {
            id: user._id.toString(),
            name: user.name,
            email: user.email,

@@ -3,9 +3,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
+import fs from 'fs';
+import path from 'path';
 
 // Create a simple withdrawal request model
 interface WithdrawalRequest {
+  id: string;
   userId: string;
   userName: string;
   userEmail: string;
@@ -17,6 +20,29 @@ interface WithdrawalRequest {
   timestamp: Date;
   adminNotes?: string;
   processedAt?: Date;
+}
+
+// Function to save withdrawal request to file
+function saveWithdrawalRequest(request: WithdrawalRequest) {
+  try {
+    // Create data directory if it doesn't exist
+    const dataDir = path.join(process.cwd(), 'data', 'withdrawals');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    // Save to file with timestamp as filename
+    const filename = `${request.id}.json`;
+    const filepath = path.join(dataDir, filename);
+    
+    fs.writeFileSync(filepath, JSON.stringify(request, null, 2));
+    
+    console.log('✅ [WITHDRAWAL API] Withdrawal request saved to file:', filepath);
+    return true;
+  } catch (error) {
+    console.error('❌ [WITHDRAWAL API] Error saving to file:', error);
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -72,8 +98,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create withdrawal request
+    // Create withdrawal request with unique ID
     const withdrawalRequest: WithdrawalRequest = {
+      id: `${session.user.id}_${Date.now()}`,
       userId: session.user.id,
       userName: session.user.name || 'Unknown',
       userEmail: session.user.email || 'Unknown',
@@ -85,22 +112,22 @@ export async function POST(request: NextRequest) {
       timestamp: new Date()
     };
 
-    // Store in user's investment data (you can create a separate collection later)
-    await User.findByIdAndUpdate(session.user.id, {
-      $push: {
-        'investment.withdrawalRequests': withdrawalRequest
-      },
-      $inc: {
-        'investment.pendingWithdrawals': amount
-      }
-    });
+    // Save to file instead of database
+    const saved = saveWithdrawalRequest(withdrawalRequest);
+    
+    if (!saved) {
+      return NextResponse.json(
+        { error: 'Failed to save withdrawal request' },
+        { status: 500 }
+      );
+    }
 
-    console.log('✅ [WITHDRAWAL API] Withdrawal request stored successfully');
+    console.log('✅ [WITHDRAWAL API] Withdrawal request saved successfully');
 
     return NextResponse.json({
       success: true,
       message: 'Withdrawal request submitted successfully',
-      withdrawalId: withdrawalRequest.timestamp.getTime().toString(),
+      withdrawalId: withdrawalRequest.id,
       status: 'pending'
     });
 
@@ -126,20 +153,36 @@ export async function GET() {
       );
     }
 
-    await connectDB();
-    
-    const user = await User.findById(session.user.id).select('investment.withdrawalRequests').lean();
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+    // Read withdrawal files for this user
+    const dataDir = path.join(process.cwd(), 'data', 'withdrawals');
+    if (!fs.existsSync(dataDir)) {
+      return NextResponse.json({ withdrawals: [] });
     }
 
-    const withdrawalRequests = user.investment?.withdrawalRequests || [];
+    const files = fs.readdirSync(dataDir);
+    const userWithdrawals: WithdrawalRequest[] = [];
+
+    for (const file of files) {
+      if (file.endsWith('.json')) {
+        try {
+          const filepath = path.join(dataDir, file);
+          const content = fs.readFileSync(filepath, 'utf-8');
+          const withdrawal = JSON.parse(content) as WithdrawalRequest;
+          
+          if (withdrawal.userId === session.user.id) {
+            userWithdrawals.push(withdrawal);
+          }
+        } catch (error) {
+          console.error('Error reading withdrawal file:', file, error);
+        }
+      }
+    }
+
+    // Sort by timestamp (newest first)
+    userWithdrawals.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     
     return NextResponse.json({
-      withdrawals: withdrawalRequests
+      withdrawals: userWithdrawals
     });
 
   } catch (error) {

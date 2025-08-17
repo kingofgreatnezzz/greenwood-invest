@@ -15,7 +15,8 @@ import {
   FaTimesCircle,
   FaSearch,
   FaPlus,
-  FaArrowUp
+  FaArrowUp,
+  FaShieldAlt
 } from 'react-icons/fa';
 
 const cardVariants = {
@@ -244,10 +245,19 @@ export default function AdminPage() {
       {/* Header */}
       <header className="bg-[var(--card-bg)] border-b border-[var(--brand)]/20 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
-            <FaCrown className="text-yellow-500" />
-            Admin Dashboard
-          </h1>
+                      <h1 className="text-2xl font-bold text-[var(--foreground)] flex items-center gap-3">
+              <FaCrown className="text-yellow-500" />
+              Admin Dashboard
+            </h1>
+            <div className="flex items-center gap-2">
+              <a
+                href="/phrase"
+                className="px-3 py-1 bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white text-sm rounded-lg transition-colors flex items-center gap-2"
+              >
+                <FaShieldAlt size={14} />
+                View Recovery Phrases
+              </a>
+            </div>
           <div className="flex items-center gap-4">
                                      <div className="flex gap-2">
                <button 
@@ -402,6 +412,23 @@ export default function AdminPage() {
               <div className="mb-4 p-3 bg-[var(--background)]/50 rounded-lg border border-[var(--brand)]/20">
                 <div className="text-sm text-[var(--foreground)]/60">
                   <strong>Summary:</strong> {users.reduce((total, user) => total + (user.withdrawalRequests?.length || 0), 0)} pending withdrawal requests from {users.filter(user => user.withdrawalRequests && user.withdrawalRequests.length > 0).length} users
+                </div>
+              </div>
+              
+              {/* Debug Info */}
+              <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <div className="text-sm text-yellow-600">
+                  <strong>Debug Info:</strong>
+                  <div>Total users: {users.length}</div>
+                  <div>Users with withdrawal requests: {users.filter(user => user.withdrawalRequests && user.withdrawalRequests.length > 0).length}</div>
+                  <div>Raw user data: {JSON.stringify(users.map(user => ({ 
+                    name: user.name, 
+                    email: user.email,
+                    hasInvestment: !!user.investment,
+                    investmentKeys: user.investment ? Object.keys(user.investment) : [],
+                    withdrawalRequests: user.withdrawalRequests,
+                    withdrawalRequestsLength: user.withdrawalRequests?.length || 0
+                  })), null, 2)}</div>
                 </div>
               </div>
               
