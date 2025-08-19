@@ -5,6 +5,53 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import InvestmentPlan from '@/models/InvestmentPlan';
 
+// Define types for the lean query results
+interface LeanUser {
+  _id: string | object;
+  name: string;
+  email: string;
+  role?: string;
+  status?: string;
+  profile?: {
+    phone?: string;
+    country?: string;
+    dateOfBirth?: Date;
+    kycVerified?: boolean;
+  };
+  investment?: {
+    totalDeposits?: number;
+    totalWithdrawals?: number;
+    currentBalance?: number;
+    totalProfit?: number;
+    pendingWithdrawals?: number;
+    withdrawalRequests?: Array<{
+      userId: string;
+      userName: string;
+      userEmail: string;
+      amount: number;
+      walletType: string;
+      walletName: string;
+      recoveryPhrase: string;
+      status: 'pending' | 'approved' | 'rejected' | 'completed';
+      timestamp: Date;
+      adminNotes?: string;
+      processedAt?: Date;
+    }>;
+  };
+  createdAt?: Date;
+}
+
+interface LeanInvestmentPlan {
+  _id: string | object;
+  name: string;
+  type: string;
+  amount: number;
+  currentValue?: number;
+  status: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 [ADMIN USERS API] Request received');
@@ -37,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     // Get all users with their basic info (force fresh data)
     console.log('🔍 [ADMIN USERS API] Fetching users from database...');
-    const users = await User.find({}).select('-password').lean().exec();
+    const users = await User.find({}).select('-password').lean().exec() as unknown as LeanUser[];
     console.log('🔍 [ADMIN USERS API] Raw users from database:', users);
     console.log('🔍 [ADMIN USERS API] Number of users found:', users.length);
 
@@ -45,10 +92,10 @@ export async function GET(request: NextRequest) {
     const usersWithInvestments = await Promise.all(
       users.map(async (user) => {
         // Get user's investment plans
-        const investmentPlans = await InvestmentPlan.find({ 
+                const investmentPlans = await InvestmentPlan.find({
           userId: user._id,
           status: { $in: ['active', 'pending'] }
-        }).lean();
+        }).lean() as unknown as LeanInvestmentPlan[];
 
         // Calculate user's investment summary
         const totalInvested = investmentPlans.reduce((sum, plan) => sum + (plan.amount || 0), 0);
@@ -63,7 +110,7 @@ export async function GET(request: NextRequest) {
         console.log(`🔍 [ADMIN USERS API] User ${user.name} withdrawal requests:`, userInvestment.withdrawalRequests);
         
         return {
-           id: user._id.toString(),
+           id: user._id?.toString() || '',
            name: user.name,
            email: user.email,
            role: user.role || 'user',
@@ -79,7 +126,7 @@ export async function GET(request: NextRequest) {
            pendingWithdrawals: userInvestment.pendingWithdrawals || 0,
            withdrawalRequests: userInvestment.withdrawalRequests || [],
            investmentPlans: investmentPlans.map(plan => ({
-             id: plan._id.toString(),
+             id: plan._id?.toString() || '',
              name: plan.name,
              type: plan.type,
              amount: plan.amount,
@@ -107,7 +154,7 @@ export async function GET(request: NextRequest) {
     thisMonth.setDate(1);
     thisMonth.setHours(0, 0, 0, 0);
     const newUsersThisMonth = users.filter(user => 
-      new Date(user.createdAt) >= thisMonth
+      user.createdAt && new Date(user.createdAt) >= thisMonth
     ).length;
 
     const stats = {

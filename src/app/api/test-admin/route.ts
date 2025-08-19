@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log('🔍 [TEST ADMIN] Request received');
     
@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('❌ [TEST ADMIN] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { error: 'Admin test failed', details: error.message },
+      { error: 'Admin test failed', details: errorMessage },
       { status: 500 }
     );
   }

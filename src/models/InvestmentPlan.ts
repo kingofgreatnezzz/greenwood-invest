@@ -69,3 +69,6 @@ InvestmentPlanSchema.pre('save', function(next) {
 
 export default mongoose.models.InvestmentPlan || mongoose.model('InvestmentPlan', InvestmentPlanSchema);
 
+
+
+

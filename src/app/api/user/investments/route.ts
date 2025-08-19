@@ -5,6 +5,40 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import InvestmentPlan from '@/models/InvestmentPlan';
 
+interface LeanUser {
+  _id?: unknown;
+  name?: string;
+  email?: string;
+  investment?: {
+    totalBalance?: number;
+    currentBalance?: number;
+    totalDeposits?: number;
+    totalWithdrawals?: number;
+    totalProfit?: number;
+    profitPercentage?: number;
+    activeInvestments?: number;
+    monthlyGrowth?: number;
+    riskScore?: string;
+    portfolioDiversity?: number;
+    totalInvested?: number;
+    totalCurrentValue?: number;
+  };
+}
+
+interface LeanInvestmentPlan {
+  _id?: unknown;
+  name?: string;
+  type?: string;
+  amount?: number;
+  status?: string;
+  currentValue?: number;
+  startDate?: string | Date;
+  endDate?: string | Date;
+  expectedReturn?: number;
+  duration?: number;
+  // Additional properties for investment plans
+}
+
 export async function GET() {
   try {
     console.log('🔍 [USER INVESTMENTS API] Request received');
@@ -25,7 +59,7 @@ export async function GET() {
     console.log('🔍 [USER INVESTMENTS API] Database connected successfully');
 
     // Get user with investment data
-    const user = await User.findById(session.user.id).select('-password').lean();
+    const user = await User.findById(session.user.id).select('-password').lean() as unknown as LeanUser;
     if (!user) {
       console.log('❌ [USER INVESTMENTS API] User not found');
       return NextResponse.json(
@@ -34,13 +68,13 @@ export async function GET() {
       );
     }
 
-    console.log('🔍 [USER INVESTMENTS API] User found:', { id: user._id, name: user.name, email: user.email });
+    console.log('🔍 [USER INVESTMENTS API] User found:', { id: user._id?.toString() || '', name: user.name || '', email: user.email || '' });
 
     // Get user's investment plans
     const investmentPlans = await InvestmentPlan.find({ 
       userId: user._id,
       status: { $in: ['active', 'pending'] }
-    }).lean();
+    }).lean() as unknown as LeanInvestmentPlan[];
 
     console.log('🔍 [USER INVESTMENTS API] Investment plans found:', investmentPlans.length);
 
@@ -65,14 +99,19 @@ export async function GET() {
     const portfolioDiversity = investmentPlans.length > 0 ? Math.min(85, 100 - (investmentPlans.length * 5)) : 0;
     
     // Determine risk score based on investment types
-    const riskScore = calculateRiskScore(investmentPlans);
+    const validInvestments = investmentPlans
+      .filter((plan): plan is LeanInvestmentPlan & { type: string; amount: number } => 
+        typeof plan.type === 'string' && typeof plan.amount === 'number'
+      )
+      .map(plan => ({ type: plan.type, amount: plan.amount }));
+    const riskScore = calculateRiskScore(validInvestments);
     
     const response = {
       user: {
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role || 'user'
+        id: user._id?.toString() || '',
+        name: user.name || '',
+        email: user.email || '',
+        role: 'user'
       },
       portfolio: {
         totalBalance,
@@ -88,16 +127,16 @@ export async function GET() {
         totalCurrentValue
       },
       investments: investmentPlans.map(plan => ({
-        id: plan._id.toString(),
-        name: plan.name,
-        type: plan.type,
-        amount: plan.amount,
-        currentValue: plan.currentValue || plan.amount,
-        profit: (plan.currentValue || plan.amount) - plan.amount,
-        profitPercentage: plan.amount > 0 ? (((plan.currentValue || plan.amount) - plan.amount) / plan.amount * 100) : 0,
-        startDate: plan.startDate,
-        endDate: plan.endDate,
-        status: plan.status,
+        id: plan._id?.toString() || Math.random().toString(36).substr(2, 9),
+        name: plan.name || 'Unknown Investment',
+        type: plan.type || 'unknown',
+        amount: plan.amount || 0,
+        currentValue: plan.currentValue || plan.amount || 0,
+        profit: (plan.currentValue || plan.amount || 0) - (plan.amount || 0),
+        profitPercentage: (plan.amount || 0) > 0 ? (((plan.currentValue || plan.amount || 0) - (plan.amount || 0)) / (plan.amount || 0) * 100) : 0,
+        startDate: plan.startDate || new Date().toISOString(),
+        endDate: plan.endDate || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+        status: plan.status || 'pending',
         expectedReturn: plan.expectedReturn || 15,
         duration: plan.duration || 180
       }))
@@ -124,10 +163,13 @@ export async function GET() {
 }
 
 // Helper function to calculate risk score
-function calculateRiskScore(investments: any[]): string {
+function calculateRiskScore(investments: Array<{
+  type: string;
+  amount: number;
+}>): string {
   if (investments.length === 0) return 'Low';
   
-  const riskFactors = {
+  const riskFactors: Record<string, number> = {
     crypto: 3,
     stocks: 2,
     'real-estate': 1,

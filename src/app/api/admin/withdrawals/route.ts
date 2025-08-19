@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import fs from 'fs';
@@ -14,12 +14,12 @@ interface WithdrawalRequest {
   walletName: string;
   recoveryPhrase: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed';
-  timestamp: string;
+  timestamp: string | Date;
   adminNotes?: string;
-  processedAt?: string;
+  processedAt?: string | Date;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log('🔍 [ADMIN WITHDRAWALS API] Request received');
     
@@ -104,3 +104,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
+

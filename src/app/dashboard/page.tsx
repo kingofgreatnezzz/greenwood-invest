@@ -17,13 +17,11 @@ import {
   FaEyeSlash,
   FaBitcoin,
   FaChartBar,
-  FaCalendarAlt,
+
   FaDollarSign,
-  FaClock,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaPauseCircle,
-  FaCrown
+  FaCrown,
+  FaShieldAlt,
+  FaTimesCircle
 } from 'react-icons/fa';
 
 const cardVariants = {
@@ -46,27 +44,16 @@ interface PortfolioData {
   totalCurrentValue: number;
 }
 
-interface Investment {
-  id: string;
-  name: string;
-  type: string;
-  amount: number;
-  currentValue: number;
-  profit: number;
-  profitPercentage: number;
-  startDate: string;
-  endDate: string;
-  status: string;
-  expectedReturn: number;
-  duration: number;
-}
+
 
 interface Transaction {
-  id: number;
+  id: string;
   type: string;
   amount: number;
   date: string;
   status: string;
+  description?: string;
+  reference?: string;
 }
 
 // Default empty data
@@ -84,7 +71,7 @@ const defaultPortfolioData: PortfolioData = {
   totalCurrentValue: 0
 };
 
-const defaultInvestments: Investment[] = [];
+
 const defaultTransactions: Transaction[] = [];
 
 // Cryptocurrency wallet addresses (you can move these to .env file)
@@ -136,42 +123,78 @@ const popularWallets = [
 
 // Simple chart component
 const SimpleChart = ({ data, height = 200 }: { data: number[], height?: number }) => {
-  const maxValue = Math.max(...data);
-  const minValue = Math.min(...data);
-  const range = maxValue - minValue;
-  
-  return (
-    <div className="relative" style={{ height }}>
-      <svg width="100%" height="100%" className="overflow-visible">
-        <defs>
-          <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.2" />
-          </linearGradient>
-        </defs>
-        <path
-          d={data.map((value, index) => {
-            const x = (index / (data.length - 1)) * 100;
-            const y = 100 - ((value - minValue) / range) * 100;
-            return `${index === 0 ? 'M' : 'L'} ${x}% ${y}%`;
-          }).join(' ')}
-          stroke="var(--brand)"
-          strokeWidth="3"
-          fill="none"
-          className="drop-shadow-lg"
-        />
-        <path
-          d={data.map((value, index) => {
-            const x = (index / (data.length - 1)) * 100;
-            const y = 100 - ((value - minValue) / range) * 100;
-            return `${index === 0 ? 'M' : 'L'} ${x}% ${y}%`;
-          }).join(' ') + ` L 100% 100% L 0% 100% Z`}
-          fill="url(#chartGradient)"
-          opacity="0.3"
-        />
-      </svg>
-    </div>
-  );
+  try {
+    // Safety checks for data
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-[var(--foreground)]/40">
+          <div className="text-center">
+            <div className="text-lg mb-2">No Data</div>
+            <div className="text-sm">Chart data unavailable</div>
+          </div>
+        </div>
+      );
+    }
+
+    const maxValue = Math.max(...data);
+    const minValue = Math.min(...data);
+    const range = maxValue - minValue;
+    
+    // Prevent division by zero
+    if (range === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-[var(--foreground)]/40">
+          <div className="text-center">
+            <div className="text-lg mb-2">Flat Line</div>
+            <div className="text-sm">No variation in data</div>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="relative" style={{ height }}>
+        <svg width="100%" height="100%" className="overflow-visible">
+          <defs>
+            <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.2" />
+            </linearGradient>
+          </defs>
+          <path
+            d={data.map((value, index) => {
+              const x = (index / (data.length - 1)) * 100;
+              const y = 100 - ((value - minValue) / range) * 100;
+              return `${index === 0 ? 'M' : 'L'} ${x}% ${y}%`;
+            }).join(' ')}
+            stroke="var(--brand)"
+            strokeWidth="3"
+            fill="none"
+            className="drop-shadow-lg"
+          />
+          <path
+            d={data.map((value, index) => {
+              const x = (index / (data.length - 1)) * 100;
+              const y = 100 - ((value - minValue) / range) * 100;
+              return `${index === 0 ? 'M' : 'L'} ${x}% ${y}%`;
+            }).join(' ') + ` L 100% 100% L 0% 100% Z`}
+            fill="url(#chartGradient)"
+            opacity="0.3"
+          />
+        </svg>
+      </div>
+    );
+  } catch (error) {
+    console.error('Error rendering SimpleChart:', error);
+    return (
+      <div className="flex items-center justify-center h-full text-[var(--foreground)]/40">
+        <div className="text-center">
+          <div className="text-lg mb-2">Chart Error</div>
+          <div className="text-sm">Failed to render chart</div>
+        </div>
+      </div>
+    );
+  }
 };
 
 export default function Dashboard() {
@@ -180,7 +203,7 @@ export default function Dashboard() {
   const [showBalance, setShowBalance] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [portfolioData, setPortfolioData] = useState<PortfolioData>(defaultPortfolioData);
-  const [investments, setInvestments] = useState<Investment[]>(defaultInvestments);
+
   const [transactions, setTransactions] = useState<Transaction[]>(defaultTransactions);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -210,17 +233,71 @@ export default function Dashboard() {
         const data = await response.json();
         console.log('✅ [USER DASHBOARD] User data fetched:', data);
         
-        setPortfolioData(data.portfolio);
-        setInvestments(data.investments);
+        // Ensure portfolio data has all required fields with fallbacks
+        const safePortfolioData = {
+          totalBalance: data.portfolio?.totalBalance || 0,
+          totalProfit: data.portfolio?.totalProfit || 0,
+          profitPercentage: data.portfolio?.profitPercentage || 0,
+          totalDeposits: data.portfolio?.totalDeposits || 0,
+          totalWithdrawals: data.portfolio?.totalWithdrawals || 0,
+          activeInvestments: data.portfolio?.activeInvestments || 0,
+          monthlyGrowth: data.portfolio?.monthlyGrowth || 0,
+          riskScore: data.portfolio?.riskScore || "Low",
+          portfolioDiversity: data.portfolio?.portfolioDiversity || 0,
+          totalInvested: data.portfolio?.totalInvested || 0,
+          totalCurrentValue: data.portfolio?.totalCurrentValue || 0
+        };
+        
+        setPortfolioData(safePortfolioData);
         setLastUpdated(new Date());
         
-        // Generate mock transactions for now (you can create a real transactions API later)
-        const mockTransactions: Transaction[] = [
-          { id: 1, type: "deposit", amount: data.portfolio.totalDeposits, date: new Date().toISOString().split('T')[0], status: "completed" },
-          { id: 2, type: "profit", amount: data.portfolio.totalProfit, date: new Date().toISOString().split('T')[0], status: "completed" },
-          { id: 3, type: "withdrawal", amount: -data.portfolio.totalWithdrawals, date: new Date().toISOString().split('T')[0], status: "completed" }
-        ];
-        setTransactions(mockTransactions);
+        // Fetch real transactions from database
+        try {
+          const transactionsResponse = await fetch('/api/user/transactions', {
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
+          });
+          
+          if (transactionsResponse.ok) {
+            const transactionsData = await transactionsResponse.json();
+            console.log('✅ [USER DASHBOARD] Transactions fetched:', transactionsData);
+            
+            if (transactionsData.transactions && transactionsData.transactions.length > 0) {
+              // Transform database transactions to match the interface
+              const realTransactions: Transaction[] = transactionsData.transactions.map((t: {
+                _id?: string;
+                id?: string;
+                type?: string;
+                amount?: number;
+                description?: string;
+                status?: string;
+                createdAt?: string | Date;
+                reference?: string;
+              }) => ({
+                id: t._id || t.id || Math.random().toString(36).substr(2, 9),
+                type: t.type || 'unknown',
+                amount: t.amount || 0,
+                date: t.createdAt || new Date().toISOString(),
+                status: t.status || 'pending',
+                description: t.description || '',
+                reference: t.reference || ''
+              }));
+              setTransactions(realTransactions);
+            } else {
+              // No transactions found, set empty array
+              setTransactions([]);
+            }
+          } else {
+            console.log('ℹ️ [USER DASHBOARD] No transactions found or error fetching transactions');
+            setTransactions([]);
+          }
+        } catch (transactionError) {
+          console.log('ℹ️ [USER DASHBOARD] Error fetching transactions, setting empty array:', transactionError);
+          setTransactions([]);
+        }
         
       } else {
         console.error('❌ [USER DASHBOARD] Failed to fetch user data:', response.status);
@@ -246,9 +323,13 @@ export default function Dashboard() {
       }, 30000); // 30 seconds
       
       // Cleanup interval on unmount
-      return () => clearInterval(interval);
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
     }
-  }, [status, router]);
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === "loading") {
     return (
@@ -258,48 +339,57 @@ export default function Dashboard() {
     );
   }
 
-  if (!session) {
-    return null;
+  if (!session || !session.user) {
+    return (
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-[var(--brand)]/30 border-t-[var(--brand)] rounded-full animate-spin mx-auto mb-4" />
+          <div className="text-[var(--foreground)]/60">Loading session...</div>
+        </div>
+      </div>
+    );
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    try {
+      if (amount === null || amount === undefined || isNaN(amount)) {
+        return '$0.00';
+      }
+      
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error, amount);
+      return '$0.00';
+    }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active': return <FaCheckCircle className="text-green-500" />;
-      case 'completed': return <FaCheckCircle className="text-blue-500" />;
-      case 'cancelled': return <FaTimesCircle className="text-red-500" />;
-      case 'pending': return <FaPauseCircle className="text-yellow-500" />;
-      default: return <FaClock className="text-gray-500" />;
+    try {
+      if (!dateString) return 'N/A';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return 'Invalid Date';
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'crypto': return <FaBitcoin className="text-yellow-500" />;
-      case 'stocks': return <FaChartBar className="text-blue-500" />;
-      case 'real-estate': return <FaChartLine className="text-green-500" />;
-      case 'forex': return <FaArrowUp className="text-purple-500" />;
-      case 'commodities': return <FaDollarSign className="text-orange-500" />;
-      default: return <FaChartLine className="text-gray-500" />;
-    }
-  };
+
 
   // Chart data for portfolio performance
   const chartData = [100, 105, 98, 112, 108, 115, 120, 118, 125, 130, 128, 132];
+
+  // Ensure all data is safely initialized
+  const safeChartData = chartData || [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100];
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pt-20">
@@ -493,7 +583,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="h-64">
-                <SimpleChart data={chartData} height={256} />
+                <SimpleChart data={safeChartData} height={256} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 text-center">
                 <div>
@@ -538,8 +628,8 @@ export default function Dashboard() {
               <h3 className="text-xl font-bold text-[var(--foreground)] mb-6">Quick Actions</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <button className="bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white p-4 rounded-lg flex items-center gap-3 transition-colors">
-                  <FaPlus size={20} />
-                  <span>New Investment</span>
+                  <FaChartLine size={20} />
+                  <span>View Analytics</span>
                 </button>
                 <button 
                   onClick={() => setShowDepositModal(true)}
@@ -567,74 +657,306 @@ export default function Dashboard() {
             className="space-y-6"
           >
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Active Investments</h2>
-              <button className="bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white px-4 sm:px-6 py-2 rounded-lg flex items-center gap-2 transition-colors">
-                <FaPlus size={16} />
-                <span className="hidden sm:inline">New Investment</span>
-                <span className="sm:hidden">New</span>
-              </button>
+              <h2 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Investment Options</h2>
+              <div className="text-sm text-[var(--foreground)]/60">
+                Choose from our available investment opportunities
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-              {investments.map((investment: Investment, index: number) => (
-                <motion.div
-                  key={investment.id}
-                  variants={cardVariants}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      {getTypeIcon(investment.type)}
-                      <div>
-                        <h3 className="font-bold text-[var(--foreground)]">{investment.name}</h3>
-                        <p className="text-sm text-[var(--foreground)]/60 capitalize">{investment.type}</p>
-                      </div>
-                    </div>
-                    {getStatusIcon(investment.status)}
-                  </div>
-                  
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between">
-                      <span className="text-[var(--foreground)]/60">Investment:</span>
-                      <span className="font-semibold">{formatCurrency(investment.amount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--foreground)]/60">Current Value:</span>
-                      <span className="font-semibold text-green-500">{formatCurrency(investment.currentValue)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--foreground)]/60">Profit:</span>
-                      <span className="font-semibold text-green-500">+{formatCurrency(investment.profit)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[var(--foreground)]/60">Return:</span>
-                      <span className="font-semibold text-green-500">+{investment.profitPercentage}%</span>
+              {/* Crypto Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.1 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaBitcoin className="text-yellow-500" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Crypto Trading</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Cryptocurrency</p>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-between text-sm text-[var(--foreground)]/60 mb-4">
-                    <div className="flex items-center gap-1">
-                      <FaCalendarAlt size={12} />
-                      <span>Started: {formatDate(investment.startDate)}</span>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$100</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">15-25%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">30-90 days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-yellow-500">Medium</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Trade Bitcoin, Ethereum, and other cryptocurrencies with professional strategies
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
+
+              {/* Stocks Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.2 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaChartBar className="text-blue-500" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Stock Portfolio</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Equities</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <FaClock size={12} />
-                      <span>{investment.duration} days</span>
+                  </div>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$500</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">8-15%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">6-24 months</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-green-500">Low-Medium</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Diversified portfolio of blue-chip stocks and growth companies
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
+
+              {/* Real Estate Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.3 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaChartLine className="text-green-500" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Real Estate Fund</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Property</p>
                     </div>
                   </div>
-                  
-                  <div className="w-full bg-[var(--background)] rounded-full h-2">
-                    <div 
-                      className="bg-[var(--brand)] h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${(investment.profitPercentage / investment.expectedReturn) * 100}%` }}
-                    ></div>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
                   </div>
-                  <div className="text-xs text-[var(--foreground)]/60 mt-2 text-center">
-                    {investment.profitPercentage}% of {investment.expectedReturn}% target
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$1,000</span>
                   </div>
-                </motion.div>
-              ))}
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">12-18%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">12-36 months</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-green-500">Low</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Invest in residential and commercial real estate properties
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
+
+              {/* Forex Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.4 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaDollarSign className="text-purple-500" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Forex Trading</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Currency</p>
+                    </div>
+                  </div>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$200</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">20-35%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">7-30 days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-red-500">High</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Trade major currency pairs with leverage and advanced strategies
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
+
+              {/* Commodities Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.5 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaChartBar className="text-orange-500" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Commodities</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Gold, Oil, etc.</p>
+                    </div>
+                  </div>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$300</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">10-20%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">3-12 months</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-yellow-500">Medium</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Invest in precious metals, energy, and agricultural commodities
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
+
+              {/* Fixed Income Investment Option */}
+              <motion.div
+                variants={cardVariants}
+                transition={{ delay: 0.6 }}
+                className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 hover:shadow-2xl transition-all duration-300"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <FaShieldAlt className="text-blue-600" size={24} />
+                    <div>
+                      <h3 className="font-bold text-[var(--foreground)]">Fixed Income</h3>
+                      <p className="text-sm text-[var(--foreground)]/60">Bonds & CDs</p>
+                    </div>
+                  </div>
+                  <div className="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-medium">
+                    Available
+                  </div>
+                </div>
+                
+                <div className="space-y-3 mb-4">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Min Investment:</span>
+                    <span className="font-semibold">$250</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Expected Return:</span>
+                    <span className="font-semibold text-green-500">5-8%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Duration:</span>
+                    <span className="font-semibold">12-60 months</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--foreground)]/60">Risk Level:</span>
+                    <span className="font-semibold text-green-500">Very Low</span>
+                  </div>
+                </div>
+                
+                <div className="bg-[var(--background)]/50 p-3 rounded-lg mb-4">
+                  <p className="text-sm text-[var(--foreground)]/70">
+                    Secure investments with guaranteed returns and low volatility
+                  </p>
+                </div>
+                
+                <button className="w-full bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white py-2 rounded-lg transition-colors font-medium">
+                  Learn More
+                </button>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -660,30 +982,41 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--brand)]/10">
-                    {transactions.map((transaction: Transaction) => (
-                      <tr key={transaction.id} className="hover:bg-[var(--background)]/30 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            {transaction.type === 'deposit' && <FaPlus className="text-green-500" />}
-                            {transaction.type === 'withdrawal' && <FaMinus className="text-red-500" />}
-                            {transaction.type === 'investment' && <FaChartLine className="text-[var(--brand)]" />}
-                            {transaction.type === 'profit' && <FaArrowUp className="text-green-500" />}
-                            <span className="capitalize">{transaction.type}</span>
+                    {transactions && transactions.length > 0 ? (
+                      transactions.map((transaction: Transaction) => (
+                        <tr key={transaction.id} className="hover:bg-[var(--background)]/30 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              {transaction.type === 'deposit' && <FaPlus className="text-green-500" />}
+                              {transaction.type === 'withdrawal' && <FaMinus className="text-red-500" />}
+                              {transaction.type === 'investment' && <FaChartLine className="text-[var(--brand)]" />}
+                              {transaction.type === 'profit' && <FaArrowUp className="text-green-500" />}
+                              <span className="capitalize">{transaction.type}</span>
+                            </div>
+                          </td>
+                          <td className={`px-6 py-4 font-semibold ${
+                            transaction.amount > 0 ? 'text-green-500' : 'text-red-500'
+                          }`}>
+                            {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
+                          </td>
+                          <td className="px-6 py-4 text-[var(--foreground)]/80">{formatDate(transaction.date)}</td>
+                          <td className="px-6 py-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {transaction.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center">
+                          <div className="text-[var(--foreground)]/40">
+                            <div className="text-lg mb-2">No transactions found</div>
+                            <div className="text-sm">Your transaction history will appear here once you make your first transaction.</div>
                           </div>
                         </td>
-                        <td className={`px-6 py-4 font-semibold ${
-                          transaction.amount > 0 ? 'text-green-500' : 'text-red-500'
-                        }`}>
-                          {transaction.amount > 0 ? '+' : ''}{formatCurrency(Math.abs(transaction.amount))}
-                        </td>
-                        <td className="px-6 py-4 text-[var(--foreground)]/80">{formatDate(transaction.date)}</td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {transaction.status}
-                          </span>
-                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

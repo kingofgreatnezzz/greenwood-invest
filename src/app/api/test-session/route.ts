@@ -17,8 +17,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('❌ [TEST SESSION] Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return NextResponse.json(
-      { error: 'Session test failed', details: error.message },
+      { error: 'Session test failed', details: errorMessage },
       { status: 500 }
     );
   }

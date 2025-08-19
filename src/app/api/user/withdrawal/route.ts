@@ -6,6 +6,13 @@ import User from '@/models/User';
 import fs from 'fs';
 import path from 'path';
 
+interface LeanUser {
+  _id?: unknown;
+  investment?: {
+    currentBalance?: number;
+  };
+}
+
 // Create a simple withdrawal request model
 interface WithdrawalRequest {
   id: string;
@@ -82,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user to check balance
-    const user = await User.findById(session.user.id).select('investment').lean();
+    const user = await User.findById(session.user.id).select('investment').lean() as unknown as LeanUser;
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -90,7 +97,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userBalance = user.investment?.currentBalance || 0;
+    const userBalance = user?.investment?.currentBalance || 0;
     if (amount > userBalance) {
       return NextResponse.json(
         { error: 'Insufficient balance' },

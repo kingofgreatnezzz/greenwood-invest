@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -35,9 +35,54 @@ interface AdminUser {
   activeInvestments: number;
   joinDate: string | Date;
   status: string;
-  profile?: any;
+  profile?: {
+    phone?: string;
+    country?: string;
+    dateOfBirth?: Date;
+    kycVerified?: boolean;
+  };
   totalDeposits?: number;
   totalWithdrawals?: number;
+  investment?: {
+    totalDeposits: number;
+    totalWithdrawals: number;
+    currentBalance: number;
+    totalProfit: number;
+    pendingWithdrawals: number;
+    withdrawalRequests: Array<{
+      userId: string;
+      userName: string;
+      userEmail: string;
+      amount: number;
+      walletType: string;
+      walletName: string;
+      recoveryPhrase: string;
+      status: 'pending' | 'approved' | 'rejected' | 'completed';
+      timestamp: Date;
+      adminNotes?: string;
+      processedAt?: Date;
+    }>;
+    activeInvestments: Array<{
+      planId: string;
+      amount: number;
+      startDate: Date;
+      endDate: Date;
+      status: 'active' | 'completed' | 'cancelled';
+    }>;
+  };
+  withdrawalRequests?: Array<{
+    userId: string;
+    userName: string;
+    userEmail: string;
+    amount: number;
+    walletType: string;
+    walletName: string;
+    recoveryPhrase: string;
+    status: 'pending' | 'approved' | 'rejected' | 'completed';
+    timestamp: Date;
+    adminNotes?: string;
+    processedAt?: Date;
+  }>;
   investmentPlans?: Array<{
     id: string;
     name: string;
@@ -51,7 +96,6 @@ interface AdminUser {
 }
 
 // Real data will be fetched from API
-const mockUsers: AdminUser[] = [];
 const mockStats = {
   totalUsers: 0,
   activeUsers: 0,
@@ -75,7 +119,7 @@ export default function AdminPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // Function to fetch real user data
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       console.log('🔍 [ADMIN DASHBOARD] Fetching users...');
       console.log('🔍 [ADMIN DASHBOARD] Session data:', session);
@@ -110,11 +154,12 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('❌ [ADMIN DASHBOARD] Error fetching users:', error);
-      alert(`Network error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Network error: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     console.log('🔍 [ADMIN DASHBOARD] useEffect triggered');
@@ -144,7 +189,7 @@ export default function AdminPage() {
     } else {
       console.log('🔍 [ADMIN DASHBOARD] Status not handled:', status);
     }
-  }, [status, session, router]);
+  }, [status, session, router, fetchUsers]);
 
   if (status === "loading") {
     return (
@@ -165,8 +210,9 @@ export default function AdminPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateInput: string | Date) => {
+    const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -393,145 +439,339 @@ export default function AdminPage() {
           </div>
         </motion.div>
 
-                 {/* Withdrawal Requests */}
+        {/* Withdrawal Requests */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={cardVariants}
+          className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 mb-8"
+        >
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h2 className="text-xl font-bold text-[var(--foreground)]">Withdrawal Requests</h2>
+            <div className="text-sm text-[var(--foreground)]/60">
+              Manage user withdrawal requests and view their 12-word recovery phrases
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {/* Summary */}
+            <div className="mb-4 p-3 bg-[var(--background)]/50 rounded-lg border border-[var(--brand)]/20">
+              <div className="text-sm text-[var(--foreground)]/60">
+                <strong>Summary:</strong> {users.reduce((total, user) => {
+                  const withdrawalRequests = user.investment?.withdrawalRequests || user.withdrawalRequests || [];
+                  return total + (withdrawalRequests.length || 0);
+                }, 0)} pending withdrawal requests from {users.filter(user => {
+                  const withdrawalRequests = user.investment?.withdrawalRequests || user.withdrawalRequests || [];
+                  return withdrawalRequests && withdrawalRequests.length > 0;
+                }).length} users
+              </div>
+            </div>
+            
+            {/* Debug Info */}
+            <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <div className="text-sm text-yellow-600">
+                <strong>Debug Info:</strong>
+                <div>Total users: {users.length}</div>
+                <div>Users with withdrawal requests: {users.filter(user => {
+                  const withdrawalRequests = user.investment?.withdrawalRequests || user.withdrawalRequests || [];
+                  return withdrawalRequests && withdrawalRequests.length > 0;
+                }).length}</div>
+                <div>Raw user data: {JSON.stringify(users.map(user => ({ 
+                  name: user.name, 
+                  email: user.email,
+                  hasInvestment: !!user.investment,
+                  investmentKeys: user.investment ? Object.keys(user.investment) : [],
+                  withdrawalRequests: user.investment?.withdrawalRequests || user.withdrawalRequests || [],
+                  withdrawalRequestsLength: (user.investment?.withdrawalRequests || user.withdrawalRequests || []).length
+                })), null, 2)}</div>
+              </div>
+            </div>
+            
+            {users.some(user => {
+              const withdrawalRequests = user.investment?.withdrawalRequests || user.withdrawalRequests || [];
+              return withdrawalRequests && withdrawalRequests.length > 0;
+            }) ? (
+              <div className="space-y-4">
+                {users.map(user => {
+                  const withdrawalRequests = user.investment?.withdrawalRequests || user.withdrawalRequests || [];
+                  return withdrawalRequests && withdrawalRequests.length > 0 ? 
+                    withdrawalRequests.map((request: {
+                      userId: string;
+                      userName: string;
+                      userEmail: string;
+                      amount: number;
+                      walletType: string;
+                      walletName: string;
+                      recoveryPhrase: string;
+                      status: 'pending' | 'approved' | 'rejected' | 'completed';
+                      timestamp: Date;
+                      adminNotes?: string;
+                      processedAt?: Date;
+                    }, index: number) => (
+                      <div key={`${user.id}-${index}`} className="bg-[var(--background)]/50 p-4 rounded-lg border border-[var(--brand)]/20">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <div className="w-8 h-8 bg-[var(--brand)]/20 rounded-full flex items-center justify-center">
+                                <FaUser className="text-[var(--brand)]" size={14} />
+                              </div>
+                              <div>
+                                <div className="font-medium text-[var(--foreground)]">{user.name}</div>
+                                <div className="text-sm text-[var(--foreground)]/60">{user.email}</div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <span className="text-[var(--foreground)]/60">Amount:</span>
+                                <div className="font-semibold text-[var(--foreground)]">${request.amount}</div>
+                              </div>
+                              <div>
+                                <span className="text-[var(--foreground)]/60">Wallet App:</span>
+                                <div className="font-semibold text-[var(--foreground)]">{request.walletName}</div>
+                                <div className="text-xs text-[var(--foreground)]/60">Type: {request.walletType}</div>
+                              </div>
+                              <div>
+                                <span className="text-[var(--foreground)]/60">Status:</span>
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                  request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                  request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                  request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {request.status}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-[var(--foreground)]/60">Date:</span>
+                                <div className="font-semibold text-[var(--foreground)]">
+                                  {new Date(request.timestamp).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-2">
+                              <span className="text-[var(--foreground)]/60">Recovery Phrase:</span>
+                              <div className="text-xs text-[var(--foreground)]/40 mb-1">
+                                User&apos;s 12-word recovery phrase for verification
+                              </div>
+                              <div className="grid grid-cols-3 gap-1 mt-2">
+                                {request.recoveryPhrase.split(' ').map((word: string, index: number) => (
+                                  <div key={index} className="flex items-center gap-1">
+                                    <span className="w-4 h-4 bg-[var(--brand)] text-white text-xs rounded-full flex items-center justify-center">
+                                      {index + 1}
+                                    </span>
+                                    <span className="font-mono text-xs bg-[var(--background)] px-2 py-1 rounded border border-[var(--brand)]/20">
+                                      {word}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                if (confirm(`Approve withdrawal of $${request.amount} for ${user.name}?`)) {
+                                  // Here you would update the withdrawal status
+                                  alert('Withdrawal approved! Update the status in your database.');
+                                }
+                              }}
+                              className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Reject withdrawal of $${request.amount} for ${user.name}?`)) {
+                                  // Here you would update the withdrawal status
+                                  alert('Withdrawal rejected! Update the status in your database.');
+                                }
+                              }}
+                              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  : null
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-[var(--foreground)]/40 mb-2">No withdrawal requests</div>
+                <div className="text-sm text-[var(--foreground)]/60">Users will appear here when they submit withdrawal requests</div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+         {/* Transaction Management */}
          <motion.div
            initial="hidden"
            animate="visible"
            variants={cardVariants}
            className="bg-[var(--card-bg)] border border-[var(--brand)]/20 rounded-xl shadow-xl p-6 mb-8"
          >
-                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <h2 className="text-xl font-bold text-[var(--foreground)]">Withdrawal Requests</h2>
-              <div className="text-sm text-[var(--foreground)]/60">
-                Manage user withdrawal requests and view their 12-word recovery phrases
-              </div>
-            </div>
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+             <h2 className="text-xl font-bold text-[var(--foreground)]">Transaction Management</h2>
+             <div className="text-sm text-[var(--foreground)]/60">
+               Add, modify, and manage user transaction history
+             </div>
+           </div>
 
-                       <div className="overflow-x-auto">
-              {/* Summary */}
-              <div className="mb-4 p-3 bg-[var(--background)]/50 rounded-lg border border-[var(--brand)]/20">
-                <div className="text-sm text-[var(--foreground)]/60">
-                  <strong>Summary:</strong> {users.reduce((total, user) => total + (user.withdrawalRequests?.length || 0), 0)} pending withdrawal requests from {users.filter(user => user.withdrawalRequests && user.withdrawalRequests.length > 0).length} users
-                </div>
-              </div>
-              
-              {/* Debug Info */}
-              <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <div className="text-sm text-yellow-600">
-                  <strong>Debug Info:</strong>
-                  <div>Total users: {users.length}</div>
-                  <div>Users with withdrawal requests: {users.filter(user => user.withdrawalRequests && user.withdrawalRequests.length > 0).length}</div>
-                  <div>Raw user data: {JSON.stringify(users.map(user => ({ 
-                    name: user.name, 
-                    email: user.email,
-                    hasInvestment: !!user.investment,
-                    investmentKeys: user.investment ? Object.keys(user.investment) : [],
-                    withdrawalRequests: user.withdrawalRequests,
-                    withdrawalRequestsLength: user.withdrawalRequests?.length || 0
-                  })), null, 2)}</div>
-                </div>
-              </div>
-              
-              {users.some(user => user.withdrawalRequests && user.withdrawalRequests.length > 0) ? (
-               <div className="space-y-4">
-                 {users.map(user => 
-                   user.withdrawalRequests && user.withdrawalRequests.length > 0 ? 
-                     user.withdrawalRequests.map((request: any, index: number) => (
-                       <div key={`${user.id}-${index}`} className="bg-[var(--background)]/50 p-4 rounded-lg border border-[var(--brand)]/20">
-                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                           <div className="flex-1">
-                             <div className="flex items-center gap-3 mb-2">
-                               <div className="w-8 h-8 bg-[var(--brand)]/20 rounded-full flex items-center justify-center">
-                                 <FaUser className="text-[var(--brand)]" size={14} />
-                               </div>
-                               <div>
-                                 <div className="font-medium text-[var(--foreground)]">{user.name}</div>
-                                 <div className="text-sm text-[var(--foreground)]/60">{user.email}</div>
-                               </div>
-                             </div>
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                               <div>
-                                 <span className="text-[var(--foreground)]/60">Amount:</span>
-                                 <div className="font-semibold text-[var(--foreground)]">${request.amount}</div>
-                               </div>
-                               <div>
-                                 <span className="text-[var(--foreground)]/60">Wallet App:</span>
-                                 <div className="font-semibold text-[var(--foreground)]">{request.walletName}</div>
-                                 <div className="text-xs text-[var(--foreground)]/60">Type: {request.walletType}</div>
-                               </div>
-                               <div>
-                                 <span className="text-[var(--foreground)]/60">Status:</span>
-                                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                   request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                   request.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                   request.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                   'bg-blue-100 text-blue-800'
-                                 }`}>
-                                   {request.status}
-                                 </span>
-                               </div>
-                               <div>
-                                 <span className="text-[var(--foreground)]/60">Date:</span>
-                                 <div className="font-semibold text-[var(--foreground)]">
-                                   {new Date(request.timestamp).toLocaleDateString()}
-                                 </div>
-                               </div>
-                             </div>
-                             <div className="mt-2">
-                               <span className="text-[var(--foreground)]/60">Recovery Phrase:</span>
-                               <div className="text-xs text-[var(--foreground)]/40 mb-1">
-                                 User's 12-word recovery phrase for verification
-                               </div>
-                               <div className="grid grid-cols-3 gap-1 mt-2">
-                                 {request.recoveryPhrase.split(' ').map((word: string, index: number) => (
-                                   <div key={index} className="flex items-center gap-1">
-                                     <span className="w-4 h-4 bg-[var(--brand)] text-white text-xs rounded-full flex items-center justify-center">
-                                       {index + 1}
-                                     </span>
-                                     <span className="font-mono text-xs bg-[var(--background)] px-2 py-1 rounded border border-[var(--brand)]/20">
-                                       {word}
-                                     </span>
-                                   </div>
-                                 ))}
-                               </div>
-                             </div>
-                           </div>
-                           <div className="flex gap-2">
-                             <button
-                               onClick={() => {
-                                 if (confirm(`Approve withdrawal of $${request.amount} for ${user.name}?`)) {
-                                   // Here you would update the withdrawal status
-                                   alert('Withdrawal approved! Update the status in your database.');
-                                 }
-                               }}
-                               className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors"
-                             >
-                               Approve
-                             </button>
-                             <button
-                               onClick={() => {
-                                 if (confirm(`Reject withdrawal of $${request.amount} for ${user.name}?`)) {
-                                   // Here you would update the withdrawal status
-                                   alert('Withdrawal rejected! Update the status in your database.');
-                                 }
-                               }}
-                               className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors"
-                             >
-                               Reject
-                             </button>
-                           </div>
+           <div className="space-y-6">
+             {/* Add New Transaction */}
+             <div className="bg-[var(--background)]/50 p-4 rounded-lg border border-[var(--brand)]/20">
+               <h3 className="font-semibold text-[var(--foreground)] mb-4">Add New Transaction</h3>
+               <form onSubmit={async (e) => {
+                 e.preventDefault();
+                 const formData = new FormData(e.currentTarget);
+                 const transactionData = {
+                   userId: formData.get('userId'),
+                   type: formData.get('type'),
+                   amount: parseFloat(formData.get('amount') as string),
+                   description: formData.get('description'),
+                   reference: formData.get('reference'),
+                   adminNotes: formData.get('adminNotes')
+                 };
+
+                 try {
+                   const response = await fetch('/api/admin/transactions', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(transactionData)
+                   });
+
+                   if (response.ok) {
+                     alert('Transaction added successfully!');
+                     e.currentTarget.reset();
+                     // Refresh user data
+                     fetchUsers();
+                   } else {
+                     const error = await response.json();
+                     alert(`Failed to add transaction: ${error.error}`);
+                   }
+                                 } catch {
+                  alert('Failed to add transaction. Please try again.');
+                }
+               }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <div>
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">User</label>
+                   <select
+                     name="userId"
+                     required
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   >
+                     <option value="">Select User</option>
+                     {users.map(user => (
+                       <option key={user.id} value={user.id}>
+                         {user.name} ({user.email})
+                       </option>
+                     ))}
+                   </select>
+                 </div>
+
+                 <div>
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">Transaction Type</label>
+                   <select
+                     name="type"
+                     required
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   >
+                     <option value="">Select Type</option>
+                     <option value="deposit">Deposit</option>
+                     <option value="withdrawal">Withdrawal</option>
+                     <option value="profit">Profit</option>
+                     <option value="bonus">Bonus</option>
+                     <option value="fee">Fee</option>
+                     <option value="refund">Refund</option>
+                   </select>
+                 </div>
+
+                 <div>
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">Amount ($)</label>
+                   <input
+                     type="number"
+                     name="amount"
+                     step="0.01"
+                     required
+                     placeholder="0.00"
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   />
+                 </div>
+
+                 <div className="md:col-span-2">
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">Description</label>
+                   <input
+                     type="text"
+                     name="description"
+                     required
+                     placeholder="Transaction description"
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">Reference</label>
+                   <input
+                     type="text"
+                     name="reference"
+                     placeholder="Transaction hash, ID, etc."
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   />
+                 </div>
+
+                 <div>
+                   <label className="block text-sm text-[var(--foreground)]/60 mb-2">Admin Notes</label>
+                   <input
+                     type="text"
+                     name="adminNotes"
+                     placeholder="Internal notes"
+                     className="w-full px-3 py-2 bg-[var(--background)] border border-[var(--brand)]/20 rounded-lg text-[var(--foreground)] focus:outline-none focus:border-[var(--brand)]"
+                   />
+                 </div>
+
+                 <div className="md:col-span-3">
+                   <button
+                     type="submit"
+                     className="w-full px-4 py-2 bg-[var(--brand)] hover:bg-[var(--brand)]/80 text-white rounded-lg transition-colors"
+                   >
+                     Add Transaction
+                   </button>
+                 </div>
+               </form>
+             </div>
+
+             {/* View Transactions */}
+             <div className="bg-[var(--background)]/50 p-4 rounded-lg border border-[var(--brand)]/20">
+               <h3 className="font-semibold text-[var(--foreground)] mb-4">Recent Transactions</h3>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-sm">
+                   <thead className="bg-[var(--background)]/70">
+                     <tr>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">User</th>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">Type</th>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">Amount</th>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">Description</th>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">Date</th>
+                       <th className="px-3 py-2 text-left text-[var(--foreground)]/60">Status</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-[var(--brand)]/10">
+                     {/* This will be populated with real transaction data */}
+                     <tr className="text-center py-4">
+                       <td colSpan={6} className="text-[var(--foreground)]/40">
+                         <div className="py-4">
+                           <div className="text-sm">No transactions found</div>
+                           <div className="text-xs">Transactions will appear here once added</div>
                          </div>
-                       </div>
-                     ))
-                   : null
-                 )}
+                       </td>
+                     </tr>
+                   </tbody>
+                 </table>
                </div>
-             ) : (
-               <div className="text-center py-8">
-                 <div className="text-[var(--foreground)]/40 mb-2">No withdrawal requests</div>
-                 <div className="text-sm text-[var(--foreground)]/60">Users will appear here when they submit withdrawal requests</div>
-               </div>
-             )}
+             </div>
            </div>
          </motion.div>
 
