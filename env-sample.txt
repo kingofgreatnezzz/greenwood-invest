@@ -1,5 +1,7 @@
 # Cryptocurrency Wallet Addresses for Deposits
 # Copy these to your .env.local file and replace with your actual wallet addresses
+# Naztony investment re brand 
+
 
 # Bitcoin Wallet Address
 NEXT_PUBLIC_BTC_WALLET=bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh
@@ -9,6 +11,14 @@ NEXT_PUBLIC_ETH_WALLET=0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6
 
 # USDT (Tron) Wallet Address
 NEXT_PUBLIC_USDT_WALLET=TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+
+
+NEXTAUTH_SECRET=xsZyG27s5U3nhhM3aO7kl29uO8C1gN+0iK9cZ5U3T4A=
+NEXTAUTH_URL=http://localhost:3000
+MONGODB_URI=mongodb+srv://jackkoftrendz:4wtfV5MeHZa4g9Ax@cluster0.ywfkw73.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+JWT_SECRET=fa8e7c4a1b4c47f1b9b95f3d6e1d2d83c29e9be476c10fcfe3a0bc29a68f91a7
+
+
 
 # Example of how to use:
 # 1. Copy this file to .env.local
