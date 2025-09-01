@@ -1,6 +1,7 @@
 # Cryptocurrency Wallet Addresses for Deposits
 # Copy these to your .env.local file and replace with your actual wallet addresses
-# Naztony investment re brand 
+
+# greenwood Be✅👑 investment brand 
 
 
 # Bitcoin Wallet Address
